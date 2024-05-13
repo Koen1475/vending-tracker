@@ -11,6 +11,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Expense Tracker',
       theme: ThemeData(
+        scaffoldBackgroundColor: Color.fromRGBO(13, 15, 17, 100),
         primarySwatch: Colors.blue,
       ),
       home: HomePage(),
@@ -26,6 +27,7 @@ class Product {
   Product(this.name, this.imagePath, this.price);
 }
 
+//Producten lijst
 List<Product> products = [
   Product('Kinder Bueno', 'assets/images/bueno.png', 1.0),
   Product('Kinder Bueno wit', 'assets/images/bueno_wit.png', 1.5),
@@ -52,10 +54,10 @@ class _HomePageState extends State<HomePage> {
         children: [
           // Totaal uitgaven
           Container(
-            padding: EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Totaal uitgaven: \$${totalExpense.toStringAsFixed(2)}',
-              style: TextStyle(
+              'Totaal uitgaven: \€${totalExpense.toStringAsFixed(2)}',
+              style: const TextStyle(
                 fontSize: 18.0,
                 fontWeight: FontWeight.bold,
               ),
@@ -65,7 +67,7 @@ class _HomePageState extends State<HomePage> {
           // Grafiek
           Container(
             height: 200, // Hoogte van de grafiek
-            padding: EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0),
             child: charts.BarChart(
               _createSampleData(), // Functie om de grafiekgegevens te maken
               animate: true, // Animatie toevoegen aan de grafiek (optioneel)
@@ -78,59 +80,104 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Top 3 Producten',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  padding: const EdgeInsets.all(10.0),
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(55, 141, 255,
+                        1), // Correcte kleurinstelling met alfa-waarde
+                    borderRadius: BorderRadius.circular(
+                        10.0), // Kies de gewenste waarde voor de afgeronde hoeken
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Top 3 Producten',
+                        style: TextStyle(
+                          color: Color.fromRGBO(255, 255, 255, 1),
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      // Hier komt de lijst met top 3 producten
+                      for (final entry in getProductCounts().take(3))
+                        Text(
+                          '${entry.key}: ${entry.value}',
+                          style: const TextStyle(
+                            color: Color.fromRGBO(255, 255, 255, 1),
+                          ), // Tekstkleur wit
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8.0),
-                // Hier komt de lijst met top 3 producten
-                for (final entry in getProductCounts().take(3))
-                  Text('${entry.key}: ${entry.value}'),
               ],
             ),
           ),
           // Lijst met producten
+          // Lijst met producten
           Expanded(
-            child: ListView.builder(
-              itemCount: products.length, // Aantal producten
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return ListTile(
-                  leading: Image.asset(
-                    product.imagePath,
-                    width: 40,
-                    height: 40,
-                  ),
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(product.name),
-                      Text('\$${product.price.toStringAsFixed(2)}'),
-                      if (productCount[product.name] != null &&
-                          productCount[product.name]! > 0)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors
-                                .grey[200], // Lichtgrijze achtergrondkleur
-                            borderRadius:
-                                BorderRadius.circular(10.0), // Ronde hoeken
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.remove),
-                            onPressed: () => removeProduct(product.name),
-                          ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0), // Padding aan de zijkanten van de lijst
+              child: ListView.builder(
+                itemCount: products.length, // Aantal producten
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(
+                        bottom: 8.0), // Marge tussen elke product "box"
+                    child: Card(
+                      // Voeg een kaart toe om de vakken voor de producten te scheiden
+                      color: Color.fromRGBO(
+                          25, 29, 35, 1), // Achtergrondkleur van het hele vak
+                      child: ListTile(
+                        leading: Image.asset(
+                          product.imagePath,
+                          width: 60,
+                          height: 60,
                         ),
-                    ],
-                  ),
-                  onTap: () {
-                    // Functie om het product toe te voegen
-                    addProduct(product);
-                  },
-                );
-              },
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              product.name,
+                              style: TextStyle(
+                                  color: Colors.white), // Tekstkleur wit
+                            ),
+                            Text(
+                              '\€${product.price.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                  color: Color.fromARGB(
+                                      255, 0, 255, 123)), // Tekstkleur wit
+                            ),
+                            if (productCount[product.name] != null &&
+                                productCount[product.name]! > 0)
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.red, // Rode achtergrondkleur
+                                  borderRadius: BorderRadius.circular(
+                                      10.0), // Ronde hoeken
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.remove),
+                                  color: Colors.white, // Icon kleur wit
+                                  onPressed: () => removeProduct(product.name),
+                                ),
+                              ),
+                          ],
+                        ),
+                        onTap: () {
+                          // Functie om het product toe te voegen
+                          addProduct(product);
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
