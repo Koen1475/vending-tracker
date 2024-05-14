@@ -9,9 +9,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Expense Tracker',
+      title: 'Vending Tracker',
       theme: ThemeData(
-        scaffoldBackgroundColor: Color.fromRGBO(13, 15, 17, 100),
+        scaffoldBackgroundColor: const Color.fromRGBO(13, 15, 17, 100),
         primarySwatch: Colors.blue,
       ),
       home: HomePage(),
@@ -29,8 +29,14 @@ class Product {
 
 //Producten lijst
 List<Product> products = [
-  Product('Kinder Bueno', 'assets/images/bueno.png', 1.0),
-  Product('Kinder Bueno wit', 'assets/images/bueno_wit.png', 1.5),
+  Product('Kinder Bueno', 'assets/images/bueno.png', 1.60),
+  Product('Kinder Bueno Wit', 'assets/images/bueno_wit.png', 1.60),
+  Product('Snicker', 'assets/images/snicker.png', 1.60),
+  Product('Mars', 'assets/images/mars.png', 1.60),
+  Product('Bounty', 'assets/images/twix.png', 1.60),
+  Product('Twix', 'assets/images/twix.png', 1.60),
+  Product('KitKat', 'assets/images/twix.png', 1.60),
+
   // Voeg hier andere producten toe op dezelfde manier
 ];
 
@@ -47,7 +53,13 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expense Tracker'),
+        // title: const Text(
+        //   'Vending Tracker',
+        //   style: TextStyle(
+        //     color: Colors.white,
+        //   ),
+        // ),
+        backgroundColor: const Color.fromRGBO(13, 15, 17, 100),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,9 +68,10 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Totaal uitgaven: \€${totalExpense.toStringAsFixed(2)}',
+              '💸 Totaal uitgaven: \€${totalExpense.toStringAsFixed(2)}',
               style: const TextStyle(
-                fontSize: 18.0,
+                color: Colors.white,
+                fontSize: 22.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -71,6 +84,25 @@ class _HomePageState extends State<HomePage> {
             child: charts.BarChart(
               _createSampleData(), // Functie om de grafiekgegevens te maken
               animate: true, // Animatie toevoegen aan de grafiek (optioneel)
+              // Voeg een aangepaste decorator toe om de stijl van de labels te wijzigen
+              barRendererDecorator: charts.BarLabelDecorator<String>(
+                labelPosition: charts.BarLabelPosition.inside,
+                insideLabelStyleSpec: const charts.TextStyleSpec(
+                  color: charts.MaterialPalette.white, // Tekstkleur wit maken
+                ),
+              ),
+              domainAxis: const charts.OrdinalAxisSpec(
+                  renderSpec: charts.SmallTickRendererSpec(
+                labelStyle:
+                    charts.TextStyleSpec(color: charts.MaterialPalette.white),
+              )),
+              primaryMeasureAxis: const charts.NumericAxisSpec(
+                renderSpec: charts.GridlineRendererSpec(
+                  labelStyle: charts.TextStyleSpec(
+                    color: charts.MaterialPalette.white, // Tekstkleur wit maken
+                  ),
+                ),
+              ),
             ),
           ),
 
@@ -83,7 +115,7 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                    color: Color.fromRGBO(55, 141, 255,
+                    color: const Color.fromRGBO(55, 141, 255,
                         1), // Correcte kleurinstelling met alfa-waarde
                     borderRadius: BorderRadius.circular(
                         10.0), // Kies de gewenste waarde voor de afgeronde hoeken
@@ -92,7 +124,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Text(
-                        'Top 3 Producten',
+                        '📊 Top 3 Producten',
                         style: TextStyle(
                           color: Color.fromRGBO(255, 255, 255, 1),
                           fontSize: 18.0,
@@ -103,7 +135,7 @@ class _HomePageState extends State<HomePage> {
                       // Hier komt de lijst met top 3 producten
                       for (final entry in getProductCounts().take(3))
                         Text(
-                          '${entry.key}: ${entry.value}',
+                          '🔼 ${entry.key}: ${entry.value}',
                           style: const TextStyle(
                             color: Color.fromRGBO(255, 255, 255, 1),
                           ), // Tekstkleur wit
@@ -115,7 +147,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           // Lijst met producten
-          // Lijst met producten
+
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -129,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                         bottom: 8.0), // Marge tussen elke product "box"
                     child: Card(
                       // Voeg een kaart toe om de vakken voor de producten te scheiden
-                      color: Color.fromRGBO(
+                      color: const Color.fromRGBO(
                           25, 29, 35, 1), // Achtergrondkleur van het hele vak
                       child: ListTile(
                         leading: Image.asset(
@@ -142,12 +174,12 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Text(
                               product.name,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Colors.white), // Tekstkleur wit
                             ),
                             Text(
                               '\€${product.price.toStringAsFixed(2)}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Color.fromARGB(
                                       255, 0, 255, 123)), // Tekstkleur wit
                             ),
@@ -224,10 +256,13 @@ class _HomePageState extends State<HomePage> {
     return [
       charts.Series<DailyExpense, String>(
         id: 'Expense',
+        // Pas de kleur van de staafjes aan naar rood
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
         domainFn: (DailyExpense expense, _) => expense.day,
         measureFn: (DailyExpense expense, _) => expense.totalExpense,
         data: data,
+        // Voeg een aangepast domein renderer toe om afgeronde randen toe te passen
+        // De grootte van de afgeronde hoeken
       )
     ];
   }
