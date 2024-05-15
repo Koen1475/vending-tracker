@@ -10,6 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   charts_flutter: ^0.12.0
+  audioplayers: ^6.0.0
+  just_audio: ^0.9.37
 
 dev_dependencies:
   flutter_test:
@@ -20,3 +22,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/alert_sound.mp3

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:just_audio/just_audio.dart';
 
 void main() {
   runApp(MyApp());
@@ -27,17 +28,16 @@ class Product {
   Product(this.name, this.imagePath, this.price);
 }
 
-//Producten lijst
 List<Product> products = [
   Product('Kinder Bueno', 'assets/images/bueno.png', 1.60),
   Product('Kinder Bueno Wit', 'assets/images/bueno_wit.png', 1.60),
   Product('Snicker', 'assets/images/snicker.png', 1.60),
   Product('Mars', 'assets/images/mars.png', 1.60),
-  Product('Bounty', 'assets/images/twix.png', 1.60),
+  Product('Bounty', 'assets/images/bounty.png', 1.60),
   Product('Twix', 'assets/images/twix.png', 1.60),
-  Product('KitKat', 'assets/images/twix.png', 1.60),
-
-  // Voeg hier andere producten toe op dezelfde manier
+  Product('KitKat', 'assets/images/kitkat.png', 1.60),
+  Product('KitKat Chunky', 'assets/images/chunky.png', 1.60),
+  Product('Balisto', 'assets/images/balisto.png', 1.60),
 ];
 
 class HomePage extends StatefulWidget {
@@ -46,29 +46,36 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late AudioPlayer _player;
   Map<String, int> productCount = {};
   double totalExpense = 0.0;
+  double limit = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // title: const Text(
-        //   'Vending Tracker',
-        //   style: TextStyle(
-        //     color: Colors.white,
-        //   ),
-        // ),
         backgroundColor: const Color.fromRGBO(13, 15, 17, 100),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Totaal uitgaven
           Container(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              '💸 Totaal uitgaven: \€${totalExpense.toStringAsFixed(2)}',
+              '💸 Totale uitgaven: \€${totalExpense.toStringAsFixed(2)}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 22.0,
@@ -76,37 +83,33 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-
-          // Grafiek
           Container(
-            height: 200, // Hoogte van de grafiek
+            height: 200,
             padding: const EdgeInsets.all(16.0),
             child: charts.BarChart(
-              _createSampleData(), // Functie om de grafiekgegevens te maken
-              animate: true, // Animatie toevoegen aan de grafiek (optioneel)
-              // Voeg een aangepaste decorator toe om de stijl van de labels te wijzigen
+              _createSampleData(),
+              animate: true,
               barRendererDecorator: charts.BarLabelDecorator<String>(
                 labelPosition: charts.BarLabelPosition.inside,
                 insideLabelStyleSpec: const charts.TextStyleSpec(
-                  color: charts.MaterialPalette.white, // Tekstkleur wit maken
+                  color: charts.MaterialPalette.white,
                 ),
               ),
               domainAxis: const charts.OrdinalAxisSpec(
-                  renderSpec: charts.SmallTickRendererSpec(
-                labelStyle:
-                    charts.TextStyleSpec(color: charts.MaterialPalette.white),
-              )),
+                renderSpec: charts.SmallTickRendererSpec(
+                  labelStyle:
+                      charts.TextStyleSpec(color: charts.MaterialPalette.white),
+                ),
+              ),
               primaryMeasureAxis: const charts.NumericAxisSpec(
                 renderSpec: charts.GridlineRendererSpec(
                   labelStyle: charts.TextStyleSpec(
-                    color: charts.MaterialPalette.white, // Tekstkleur wit maken
+                    color: charts.MaterialPalette.white,
                   ),
                 ),
               ),
             ),
           ),
-
-          // Overzicht top 3 producten
           Container(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -115,10 +118,8 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                    color: const Color.fromRGBO(55, 141, 255,
-                        1), // Correcte kleurinstelling met alfa-waarde
-                    borderRadius: BorderRadius.circular(
-                        10.0), // Kies de gewenste waarde voor de afgeronde hoeken
+                    color: const Color.fromRGBO(55, 141, 255, 1),
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,13 +133,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 8.0),
-                      // Hier komt de lijst met top 3 producten
                       for (final entry in getProductCounts().take(3))
                         Text(
                           '🔼 ${entry.key}: ${entry.value}',
                           style: const TextStyle(
                             color: Color.fromRGBO(255, 255, 255, 1),
-                          ), // Tekstkleur wit
+                          ),
                         ),
                     ],
                   ),
@@ -146,23 +146,17 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          // Lijst met producten
-
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0), // Padding aan de zijkanten van de lijst
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ListView.builder(
-                itemCount: products.length, // Aantal producten
+                itemCount: products.length,
                 itemBuilder: (context, index) {
                   final product = products[index];
                   return Padding(
-                    padding: const EdgeInsets.only(
-                        bottom: 8.0), // Marge tussen elke product "box"
+                    padding: const EdgeInsets.only(bottom: 8.0),
                     child: Card(
-                      // Voeg een kaart toe om de vakken voor de producten te scheiden
-                      color: const Color.fromRGBO(
-                          25, 29, 35, 1), // Achtergrondkleur van het hele vak
+                      color: const Color.fromRGBO(25, 29, 35, 1),
                       child: ListTile(
                         leading: Image.asset(
                           product.imagePath,
@@ -174,14 +168,12 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Text(
                               product.name,
-                              style: const TextStyle(
-                                  color: Colors.white), // Tekstkleur wit
+                              style: const TextStyle(color: Colors.white),
                             ),
                             Text(
                               '\€${product.price.toStringAsFixed(2)}',
                               style: const TextStyle(
-                                  color: Color.fromARGB(
-                                      255, 0, 255, 123)), // Tekstkleur wit
+                                  color: Color.fromARGB(255, 0, 255, 123)),
                             ),
                             if (productCount[product.name] != null &&
                                 productCount[product.name]! > 0)
@@ -189,20 +181,18 @@ class _HomePageState extends State<HomePage> {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: Colors.red, // Rode achtergrondkleur
-                                  borderRadius: BorderRadius.circular(
-                                      10.0), // Ronde hoeken
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(10.0),
                                 ),
                                 child: IconButton(
                                   icon: const Icon(Icons.remove),
-                                  color: Colors.white, // Icon kleur wit
+                                  color: Colors.white,
                                   onPressed: () => removeProduct(product.name),
                                 ),
                               ),
                           ],
                         ),
                         onTap: () {
-                          // Functie om het product toe te voegen
                           addProduct(product);
                         },
                       ),
@@ -214,6 +204,10 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showSettingsDialog(context),
+        child: const Icon(Icons.settings),
+      ),
     );
   }
 
@@ -221,6 +215,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       productCount[product.name] = (productCount[product.name] ?? 0) + 1;
       calculateTotalExpense();
+      checkLimit();
     });
   }
 
@@ -229,11 +224,11 @@ class _HomePageState extends State<HomePage> {
       if (productCount[productName] != null && productCount[productName]! > 0) {
         productCount[productName] = productCount[productName]! - 1;
         calculateTotalExpense();
+        checkLimit();
       }
     });
   }
 
-  // Functie om de totale uitgaven te berekenen
   void calculateTotalExpense() {
     double total = 0.0;
     for (final entry in productCount.entries) {
@@ -256,13 +251,10 @@ class _HomePageState extends State<HomePage> {
     return [
       charts.Series<DailyExpense, String>(
         id: 'Expense',
-        // Pas de kleur van de staafjes aan naar rood
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
         domainFn: (DailyExpense expense, _) => expense.day,
         measureFn: (DailyExpense expense, _) => expense.totalExpense,
         data: data,
-        // Voeg een aangepast domein renderer toe om afgeronde randen toe te passen
-        // De grootte van de afgeronde hoeken
       )
     ];
   }
@@ -270,26 +262,69 @@ class _HomePageState extends State<HomePage> {
   List<DailyExpense> generateDailyExpenses() {
     Map<String, double> dailyExpenses = {};
 
-    // Loop over alle producten en tel de totale uitgaven per dag op
     for (final entry in productCount.entries) {
       final product = products.firstWhere((p) => p.name == entry.key);
       final totalExpense = entry.value * product.price;
       final now = DateTime.now();
-      final day =
-          '${now.year}-${now.month}-${now.day}'; // Gebruik de huidige dag als voorbeeld
+      final day = '${now.year}-${now.month}-${now.day}';
 
       dailyExpenses.update(day, (value) => value + totalExpense,
           ifAbsent: () => totalExpense);
     }
 
-    // Converteer de Map naar een lijst van DailyExpense objecten
     return dailyExpenses.entries
         .map((entry) => DailyExpense(entry.key, entry.value))
         .toList();
   }
+
+  Future<void> _showSettingsDialog(BuildContext context) async {
+    TextEditingController _limitController = TextEditingController();
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Limiet instellen'),
+          content: TextField(
+            controller: _limitController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: "Voer limiet in"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Opslaan'),
+              onPressed: () {
+                if (_limitController.text.isNotEmpty) {
+                  setState(() {
+                    limit = double.parse(_limitController.text);
+                  });
+                  Navigator.of(context).pop();
+                  checkLimit();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void checkLimit() {
+    if (totalExpense > limit) {
+      playAlertSound();
+    }
+  }
+
+  playAlertSound() async {
+    try {
+      await _player.setAsset("alert_sound.mp3");
+      await _player.play();
+    } catch (e) {
+      print("Fout bij afspelen van audio: $e");
+    }
+  }
 }
 
-// Klasse om de dagelijkse uitgaven te vertegenwoordigen
 class DailyExpense {
   final String day;
   final double totalExpense;
