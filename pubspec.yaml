@@ -22,4 +22,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/alert_sound.mp3
+    - assets/alert.mp3

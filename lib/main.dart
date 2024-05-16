@@ -204,9 +204,17 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showSettingsDialog(context),
-        child: const Icon(Icons.settings),
+      floatingActionButton: Theme(
+        data: ThemeData(
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: Colors.blue, // Witte achtergrond
+            foregroundColor: Colors.white, // Wit icoontje
+          ),
+        ),
+        child: FloatingActionButton(
+          onPressed: () => _showSettingsDialog(context),
+          child: const Icon(Icons.settings),
+        ),
       ),
     );
   }
@@ -317,7 +325,7 @@ class _HomePageState extends State<HomePage> {
 
   playAlertSound() async {
     try {
-      await _player.setAsset("alert_sound.mp3");
+      await _player.setAsset("assets/alert.mp3");
       await _player.play();
     } catch (e) {
       print("Fout bij afspelen van audio: $e");
