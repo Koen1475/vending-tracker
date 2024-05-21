@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:just_audio/just_audio.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:background_locator/background_locator.dart';
 
 void main() {
   runApp(MyApp());
+  initLocator();
+}
+
+Future<void> initLocator() async {
+  await BackgroundLocator.initialize();
 }
 
 class MyApp extends StatelessWidget {
@@ -50,11 +58,19 @@ class _HomePageState extends State<HomePage> {
   Map<String, int> productCount = {};
   double totalExpense = 0.0;
   double limit = 0.0;
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
     _player = AudioPlayer();
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    var androidSettings = const AndroidInitializationSettings('app_icon');
+    var initSettings = InitializationSettings(android: androidSettings);
+    flutterLocalNotificationsPlugin.initialize(initSettings);
+    _requestLocationPermission();
+
+    _checkLocation();
   }
 
   @override
@@ -317,6 +333,33 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // Toon een dialoogvenster om de gebruiker te informeren over de noodzaak van locatietoegang
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Locatietoegang vereist'),
+            content: Text(
+                'Deze app heeft toegang tot je locatie nodig om goed te kunnen werken.'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  // Vraag opnieuw toestemming aan als de gebruiker OK selecteert
+                  _requestLocationPermission();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   void checkLimit() {
     if (totalExpense > limit) {
       playAlertSound();
@@ -330,6 +373,71 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print("Fout bij afspelen van audio: $e");
     }
+  }
+
+  void _checkLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled don't continue accessing the position
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try
+        // requesting permissions again (this is also where
+        // Android's shouldShowRequestPermissionRationale
+        // returned true. According to Android guidelines
+        // your App should show an explanatory UI now.
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // When we reach here, permissions are granted and we can
+    // continue accessing the position of the device.
+    Geolocator.getPositionStream().listen((Position position) {
+      // Example coordinates for the desired location
+      double targetLatitude = 51.450340;
+      double targetLongitude = 5.452850;
+      double distance = Geolocator.distanceBetween(position.latitude,
+          position.longitude, targetLatitude, targetLongitude);
+
+      // If within 100 meters of the target location
+      if (distance <= 100) {
+        _showNotification();
+      }
+    });
+  }
+
+  Future<void> _showNotification() async {
+    var androidDetails = const AndroidNotificationDetails(
+      'channelId',
+      'channelName',
+      channelDescription: 'channelDescription',
+      importance: Importance.high,
+    );
+
+    var generalNotificationDetails =
+        NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'Locatie Bereikt',
+      'U bent in de buurt van de gewenste locatie.',
+      generalNotificationDetails,
+    );
   }
 }
 

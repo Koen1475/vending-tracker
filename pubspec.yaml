@@ -12,6 +12,9 @@ dependencies:
   charts_flutter: ^0.12.0
   audioplayers: ^6.0.0
   just_audio: ^0.9.37
+  flutter_local_notifications: ^17.1.2
+  geolocator: ^12.0.0
+  background_locator: ^1.6.12
 
 dev_dependencies:
   flutter_test:
